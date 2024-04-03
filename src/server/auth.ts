@@ -8,9 +8,8 @@ import {
 import { type Adapter } from "next-auth/adapters";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { compare } from "bcrypt";
-import { env } from "~/env";
 import { db } from "~/server/db";
-import { SignJWT, importJWK } from "jose";
+import { generateJWT } from "~/utils/jwt";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -19,19 +18,6 @@ import { SignJWT, importJWK } from "jose";
  * @see https://next-auth.js.org/getting-started/typescript#module-augmentation
  */
 
-const generateJWT = async (payload: any) => {
-  const secret = env.NEXTAUTH_SECRET || "secret";
-
-  const jwk = await importJWK({ k: secret, alg: "HS256", kty: "oct" });
-
-  const jwt = await new SignJWT(payload)
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime("365d")
-    .sign(jwk);
-
-  return jwt;
-};
 declare module "next-auth" {
   interface Session extends DefaultSession {
     user: DefaultSession["user"] & {
@@ -99,9 +85,12 @@ export const authOptions: NextAuthOptions = {
         );
 
         if (passwordCorrect) {
-          const jwt = await generateJWT({
-            id: user.id,
-          });
+          const jwt = await generateJWT(
+            {
+              id: user.id,
+            },
+            "365d",
+          );
           await db.user.update({
             where: {
               id: user.id,

@@ -1,5 +1,7 @@
 import { signIn, signOut, useSession } from "next-auth/react";
 import Head from "next/head";
+import ProjectForm from "~/components/ProjectForm";
+import ProjectMembersForm from "~/components/ProjectMembersForm";
 
 import { api } from "~/utils/api";
 
@@ -32,13 +34,16 @@ function AuthShowcase() {
     undefined, // no input
     { enabled: sessionData?.user !== undefined },
   );
-
+  const { data: projects } = api.project.getAll.useQuery();
+  console.log("projects", projects);
   return (
     <div className="flex flex-col items-center justify-center gap-4">
       <p className="text-center text-2xl text-white">
         {sessionData && <span>Logged in as {sessionData.user?.name}</span>}
         {secretMessage && <span> - {secretMessage}</span>}
       </p>
+      <ProjectForm />
+      <ProjectMembersForm />
       <button
         className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
         onClick={sessionData ? () => void signOut() : () => void signIn()}
