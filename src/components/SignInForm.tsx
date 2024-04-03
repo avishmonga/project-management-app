@@ -1,69 +1,62 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { api } from "~/utils/api";
-import { useRouter } from "next/router";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import React, { useRef, useState } from "react";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-export default function SignUpForm() {
-  const router = useRouter();
-  const mutation = api.user.signup.useMutation();
 
-  const email = useRef("");
-  const password = useRef("");
-  const name = useRef("");
+const SigninForm = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [requiredError, setRequiredError] = useState({
     emailReq: false,
     passReq: false,
-    nameReq: false,
   });
 
   function togglePasswordVisibility() {
     setIsPasswordVisible((prevState: any) => !prevState);
   }
-  const handleSubmit = async () => {
-    let _email = email.current;
-    let _password = password.current;
-    let _name = name.current;
-    if (_email && _password) {
-      const response = await mutation.mutate({
-        email: _email,
-        password: _password,
-        name: _name,
+  const router = useRouter();
+  const email = useRef("");
+  const password = useRef("");
+
+  const handleSubmit = async (e?: React.FormEvent<HTMLButtonElement>) => {
+    if (e) {
+      e.preventDefault();
+    }
+
+    if (!email.current || !password.current) {
+      setRequiredError({
+        emailReq: email.current ? false : true,
+        passReq: password.current ? false : true,
       });
+      return;
+    }
+
+    const res = await signIn("credentials", {
+      email: email.current,
+      password: password.current,
+      redirect: false,
+    });
+
+    if (!res?.error) {
+      router.push("/");
+    } else {
+      //   toast("Error Signing in");
     }
   };
   return (
     <section className="flex  justify-center  ">
       <div className="flex h-[calc(100vh-250px)] w-full max-w-[600px] flex-col items-center justify-center gap-6 overflow-auto  text-slate-200">
-        <h1 className=" font-semibold">Create an account</h1>
+        <h1 className=" font-semibold">Signin to your Account</h1>
         <div className="grid w-full items-center gap-4">
-          <div className="flex flex-col gap-4">
-            <Label htmlFor="name">Name</Label>
-            <Input
-              name="name"
-              id="name"
-              placeholder="Enter your name"
-              onChange={(e) => {
-                setRequiredError((prevState) => ({
-                  ...prevState,
-                  nameReq: false,
-                }));
-                name.current = e.target.value;
-              }}
-            />
-            {requiredError.nameReq && (
-              <span className=" text-red-500">Name is required</span>
-            )}
-          </div>
           <div className="flex flex-col gap-4">
             <Label htmlFor="email">Email</Label>
             <Input
               name="email"
               id="email"
-              placeholder="Enter your email"
+              placeholder="name@email.com"
               onChange={(e) => {
                 setRequiredError((prevState) => ({
                   ...prevState,
@@ -91,6 +84,12 @@ export default function SignUpForm() {
                     passReq: false,
                   }));
                   password.current = e.target.value;
+                }}
+                onKeyDown={async (e) => {
+                  if (e.key === "Enter") {
+                    setIsPasswordVisible(false);
+                    handleSubmit();
+                  }
                 }}
               />
               <button
@@ -144,14 +143,16 @@ export default function SignUpForm() {
           className="bg-dark-1 hover:bg-dark-2 my-3 w-full"
           onClick={handleSubmit}
         >
-          Signup
+          Login
         </Button>
         <div className="flex w-full justify-end">
-          <Button onClick={() => router.push("/signin")} variant={"link"}>
-            Login
+          <Button onClick={() => router.push("/signup")} variant={"link"}>
+            Create an account
           </Button>
         </div>
       </div>
     </section>
   );
-}
+};
+
+export default SigninForm;

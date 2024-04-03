@@ -1,10 +1,6 @@
 import { z } from "zod";
 
-import {
-  createTRPCRouter,
-  protectedProcedure,
-  publicProcedure,
-} from "~/server/api/trpc";
+import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { hash } from "bcrypt";
 
 export const userRouter = createTRPCRouter({
@@ -13,6 +9,7 @@ export const userRouter = createTRPCRouter({
       z.object({
         email: z.string(),
         password: z.string(),
+        name: z.string(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -32,6 +29,7 @@ export const userRouter = createTRPCRouter({
         data: {
           email: input.email,
           password: hashedPassword,
+          name: input.name,
         },
       });
 
